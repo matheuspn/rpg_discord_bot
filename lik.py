@@ -9,11 +9,28 @@ with open("db_access.txt", "r") as f:
     db = f.read()
 
 try:
-    conn = psycopg3.connect("db")
+    conn = psycopg3.connect(db)
     cur = conn.cursor()
 except:
     print("Não foi possível se conectar com o db")
 
+def atribui_status():
+    """
+    Atribui os status do soldado aleatoriamente.
+    Retorna um dicionário com os status e seus valores.
+    """
+    pontos = [5, 2, 2, 1]
+    atributos = ["forca", "armadura", "vida", "vel_ataque"]
+    status = {}
+
+    while len(pontos) > 0:
+        atributo = choice(atributos)
+        ponto = choice(pontos)
+        atributos.remove(atributo)
+        pontos.remove(ponto)
+        status[atributo] = ponto
+
+    return status
 
 bot = commands.Bot(command_prefix= '>')
 
@@ -53,19 +70,12 @@ async def soldado(ctx, nome):
         if moedas >= 100:
             moedas -= 100
             cur.execute(f"UPDATE id_{ctx.author.id} SET moedas = {moedas} WHERE nome = %s", name)
-            status = [5, 2, 2, 1]
-            forca = choice(status)
-            status.remove(forca)
-            armadura = choice(status)
-            status.remove(armadura)
-            vida = choice(status)
-            status.remove(vida)
-            vel_ataque = choice(status)
-            status.remove(vel_ataque)
-            status = [nome, forca, armadura, vida, vel_ataque, 1]
-            cur.execute(f"INSERT INTO id_{ctx.author.id} VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s)", (nome, forca, armadura, vida, vel_ataque, 1, 0))
+            status = atribui_status()
+            cur.execute(f"INSERT INTO id_{ctx.author.id} VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s)", (nome, status["forca"], status["armadura"], status["vida"], status["vel_ataque"], 1, 0))
             conn.commit()
-            await ctx.send(f"@{ctx.author.name} você adiquiriu um soldado com os seguintes status:\nForça: {status[1]}\nArmadura: {status[2]}\nVida: {status[3]}\nVel. Ataque: {status[4]}")
+            await ctx.send(f"@{ctx.author.name} você adiquiriu um soldado com os seguintes status:\nForça: {status['forca']}\nArmadura: {status['armadura']}\nVida: {status['vida']}\nVel. Ataque: {status['vel_ataque']}")
+        else:
+            await ctx.send(f"@{ctx.author.name} você precisa de 100 moedas para comprar um soldado, você possui {moedas}.")
     except EnvironmentError:
         await ctx.send(f"@{ctx.author.name} você dar um nome ao seu soldado.")
         print("Erro no bd",EnvironmentError)
