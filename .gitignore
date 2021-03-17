@@ -1,0 +1,8 @@
+# vscode
+.vscode/
+
+# my stuff
+token.txt
+db_access.txt
+teste_db.py
+discord.log
